@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="kn">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta charset="UTF-8">
 <title>Kannada Monthly Calendar</title>
 
@@ -113,10 +114,20 @@ select {
     padding: 4px;
   }
 
-  .modal-content {
-    width: 95%;
-    margin: 20% auto;
-  }
+.modal-content {
+  width: 100%;
+  max-width: 90%;
+  margin: 0;
+  padding: 24px 18px;
+  border-radius: 12px;
+}
+
+.modal {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
 }
 </style>
 
@@ -160,8 +171,8 @@ select {
 <p><strong>ತಿಥಿ:</strong> <span id="modalTithi"></span></p>
 <p><strong>ನಕ್ಷತ್ರ:</strong> <span id="modalNakshatra"></span></p>
 <p><strong>ರಾಹುಕಾಲ:</strong> <span id="modalRahukala"></span></p>
-<p><strong>ಗುಳಿಕ:</strong> <span id="modalGulika"></span></p>
-<p><strong>ಯಮಗಂಡ:</strong> <span id="modalYamaganda"></span></p>
+<p><strong>ಗುಳಿಕಕಾಲ:</strong> <span id="modalGulika"></span></p>
+<p><strong>ಯಮಗಂಡಕಾಲ:</strong> <span id="modalYamaganda"></span></p>
 <p><strong>ತಾರಾ ಬಲ:</strong> <span id="modalTara"></span></p>
 </div>
 </div>
@@ -201,14 +212,14 @@ monthNames.forEach((m,i)=>{
 monthSelect.value=2; // February default
 
 const nakshatras=[
-"ಅಶ್ವಿನಿ","ಭರಣಿ","ಕೃತಿಕಾ","ರೋಹಿಣಿ","ಮೃಗಶಿರ",
+"ಅಶ್ವಿನಿ","ಭರಣಿ","ಕೃತ್ತಿಕಾ","ರೋಹಿಣಿ","ಮೃಗಶಿರ",
 "ಆರ್ದ್ರ","ಪುನರ್ವಸು","ಪುಷ್ಯ","ಆಶ್ಲೇಷಾ",
-"ಮಘಾ","ಪೂರ್ವ ಫಲ್ಗುಣಿ","ಉತ್ತರ ಫಲ್ಗುಣಿ",
+"ಮಘಾ","ಪೂರ್ವೇ","ಉತ್ತರೆ",
 "ಹಸ್ತ","ಚಿತ್ರಾ","ಸ್ವಾತಿ",
 "ವಿಶಾಖ","ಅನೂರಾಧಾ","ಜ್ಯೇಷ್ಠಾ",
-"ಮೂಲ","ಪೂರ್ವ ಆಶಾಢ","ಉತ್ತರ ಆಶಾಢ",
+"ಮೂಲ","ಪೂರ್ವಾಷಾಢಾ","ಉತ್ತರಾಷಾಢಾ",
 "ಶ್ರವಣ","ಧನಿಷ್ಠ","ಶತಭಿಷಾ",
-"ಪೂರ್ವ ಭಾದ್ರಪದ","ಉತ್ತರ ಭಾದ್ರಪದ","ರೇವತಿ"
+"ಪೂರ್ವಾಭಾದ್ರ","ಉತ್ತರಾಭಾದ್ರ","ರೇವತಿ"
 ];
 
 const nakshatraMap={};
@@ -369,4 +380,5 @@ renderCalendar();
 </script>
 </body>
 </html>
+
 
