@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+<meta charset="UTF-8">
+<title>Kannada Monthly Calendar</title>
+
+<style>
+@page { size: A4; margin: 15mm; }
+
+body { font-family: "Nirmala UI", sans-serif; margin:0; padding:20px; }
+h1 { text-align:center; color:#c62828; }
+
+.controls {
+  display:flex;
+  gap:20px;
+  justify-content:center;
+  margin-bottom:15px;
+}
+
+select { padding:5px; }
+
+.calendar {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+.calendar th, .calendar td {
+  border:1px solid #000;
+  width:14.28%;
+  height:90px;
+  vertical-align:top;
+  padding:5px;
+}
+
+.calendar th { background:#f2f2f2; }
+
+.date-number { font-weight:bold; cursor:pointer; }
+
+.modal {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background:white;
+  width:400px;
+  margin:10% auto;
+  padding:20px;
+  border-radius:8px;
+}
+
+.close { float:right; cursor:pointer; font-weight:bold; }
+</style>
+
+<script src="mlr2026.js"></script>
+</head>
+<body>
+
+<h1 id="monthTitle"></h1>
+
+<div class="controls">
+  <div>
+    <label><strong>ವರ್ಷ:</strong></label>
+    <select id="yearSelect"></select>
+  </div>
+
+  <div>
+    <label><strong>ತಿಂಗಳು:</strong></label>
+    <select id="monthSelect"></select>
+  </div>
+
+  <div>
+    <label><strong>ಜನ್ಮ ನಕ್ಷತ್ರ:</strong></label>
+    <select id="birthStarSelect"></select>
+  </div>
+</div>
+
+<table class="calendar">
+<thead>
+<tr>
+<th>ಭಾನು</th><th>ಸೋಮ</th><th>ಮಂಗಳ</th>
+<th>ಬುಧ</th><th>ಗುರು</th><th>ಶುಕ್ರ</th><th>ಶನಿ</th>
+</tr>
+</thead>
+<tbody id="calendarBody"></tbody>
+</table>
+
+<div class="modal" id="modal">
+<div class="modal-content">
+<span class="close" onclick="closeModal()">X</span>
+<h3 id="modalDate"></h3>
+<p><strong>ತಿಥಿ:</strong> <span id="modalTithi"></span></p>
+<p><strong>ನಕ್ಷತ್ರ:</strong> <span id="modalNakshatra"></span></p>
+<p><strong>ರಾಹುಕಾಲ:</strong> <span id="modalRahukala"></span></p>
+<p><strong>ಗುಳಿಕ:</strong> <span id="modalGulika"></span></p>
+<p><strong>ಯಮಗಂಡ:</strong> <span id="modalYamaganda"></span></p>
+<p><strong>ತಾರಾ ಬಲ:</strong> <span id="modalTara"></span></p>
+</div>
+</div>
+
+<script>
+
+const panchangaYearData = window.panchangaYearData || {};
+const monthNames=[
+"ಜನವರಿ","ಫೆಬ್ರವರಿ","ಮಾರ್ಚ್","ಏಪ್ರಿಲ್",
+"ಮೇ","ಜೂನ್","ಜುಲೈ","ಆಗಸ್ಟ್",
+"ಸೆಪ್ಟೆಂಬರ್","ಅಕ್ಟೋಬರ್","ನವೆಂಬರ್","ಡಿಸೆಂಬರ್"
+];
+
+let selectedYear, selectedMonth;
+
+const yearSelect=document.getElementById("yearSelect");
+const monthSelect=document.getElementById("monthSelect");
+const birthSelect=document.getElementById("birthStarSelect");
+
+Object.keys(panchangaYearData).forEach(y=>{
+  const opt=document.createElement("option");
+  opt.value=y;
+  opt.text=y;
+  yearSelect.appendChild(opt);
+});
+
+selectedYear=Object.keys(panchangaYearData)[0];
+yearSelect.value=selectedYear;
+
+monthNames.forEach((m,i)=>{
+  const opt=document.createElement("option");
+  opt.value=i+1;
+  opt.text=m;
+  monthSelect.appendChild(opt);
+});
+
+monthSelect.value=2; // February default
+
+const nakshatras=[
+"ಅಶ್ವಿನಿ","ಭರಣಿ","ಕೃತಿಕಾ","ರೋಹಿಣಿ","ಮೃಗಶಿರ",
+"ಆರ್ದ್ರ","ಪುನರ್ವಸು","ಪುಷ್ಯ","ಆಶ್ಲೇಷಾ",
+"ಮಘಾ","ಪೂರ್ವ ಫಲ್ಗುಣಿ","ಉತ್ತರ ಫಲ್ಗುಣಿ",
+"ಹಸ್ತ","ಚಿತ್ರಾ","ಸ್ವಾತಿ",
+"ವಿಶಾಖ","ಅನೂರಾಧಾ","ಜ್ಯೇಷ್ಠಾ",
+"ಮೂಲ","ಪೂರ್ವ ಆಶಾಢ","ಉತ್ತರ ಆಶಾಢ",
+"ಶ್ರವಣ","ಧನಿಷ್ಠ","ಶತಭಿಷಾ",
+"ಪೂರ್ವ ಭಾದ್ರಪದ","ಉತ್ತರ ಭಾದ್ರಪದ","ರೇವತಿ"
+];
+
+const nakshatraMap={};
+nakshatras.forEach((n,i)=>{
+  nakshatraMap[n]=i+1;
+  const opt=document.createElement("option");
+  opt.value=i+1;
+  opt.text=n;
+  birthSelect.appendChild(opt);
+});
+
+const taraNames=[
+"ಜನ್ಮ","ಸಂಪತ್","ವಿಪತ್","ಕ್ಷೇಮ",
+"ಪ್ರತ್ಯರ","ಸಾಧಕ","ವಧ","ಮೈತ್ರ","ಪ. ಮೈತ್ರ"
+];
+
+function calculateTara(birthStar,todayStar){
+  if(!todayStar) return "Please add data";
+  const distance=(todayStar-birthStar+27)%27;
+  return taraNames[distance%9];
+}
+
+function parseTimeToMinutes(t){
+  const [h,m]=t.split(":").map(Number);
+  return h*60+m;
+}
+
+function minutesToTimeStr(mins){
+  const h=Math.floor(mins/60);
+  const m=Math.floor(mins%60);
+  return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+}
+
+const inauspiciousSegments={
+  0:{rahu:8,gulika:7,yama:5},
+  1:{rahu:2,gulika:6,yama:4},
+  2:{rahu:7,gulika:5,yama:3},
+  3:{rahu:5,gulika:4,yama:2},
+  4:{rahu:6,gulika:3,yama:1},
+  5:{rahu:4,gulika:2,yama:7},
+  6:{rahu:3,gulika:1,yama:6}
+};
+
+function getInauspiciousTimes(dayData, yyyy, mm, dd){
+
+  if(!dayData?.sunrise || !dayData?.sunset)
+    return {rahukala:"Please add data",
+            gulika:"Please add data",
+            yamaganda:"Please add data"};
+
+  const sunriseMin=parseTimeToMinutes(dayData.sunrise);
+  const sunsetMin=parseTimeToMinutes(dayData.sunset);
+  const part=(sunsetMin-sunriseMin)/8;
+
+  const weekday=new Date(yyyy,mm-1,dd).getDay();
+  const seg=inauspiciousSegments[weekday];
+
+  function segRange(i){
+    const start=sunriseMin+(i-1)*part;
+    const end=sunriseMin+i*part;
+    return minutesToTimeStr(start)+" - "+minutesToTimeStr(end);
+  }
+
+  return {
+    rahukala:segRange(seg.rahu),
+    gulika:segRange(seg.gulika),
+    yamaganda:segRange(seg.yama)
+  };
+}
+
+function renderCalendar(){
+
+  selectedYear=yearSelect.value;
+  selectedMonth=monthSelect.value;
+
+  document.getElementById("monthTitle").innerText=
+    monthNames[selectedMonth-1]+" "+selectedYear;
+
+  const tbody=document.getElementById("calendarBody");
+  tbody.innerHTML="";
+
+  const firstDay=new Date(selectedYear,selectedMonth-1,1).getDay();
+  const daysInMonth=new Date(selectedYear,selectedMonth,0).getDate();
+
+  let date=1;
+
+  for(let i=0;i<6;i++){
+    let row=document.createElement("tr");
+    for(let j=0;j<7;j++){
+      let cell=document.createElement("td");
+      if(i===0&&j<firstDay){
+        cell.innerHTML="";
+      }else if(date>daysInMonth){
+        break;
+      }else{
+        const thisDate=date;
+        let span=document.createElement("div");
+        span.className="date-number";
+        span.innerText=thisDate;
+        span.onclick=function(){openModal(thisDate);};
+        cell.appendChild(span);
+        date++;
+      }
+      row.appendChild(cell);
+    }
+    tbody.appendChild(row);
+  }
+}
+
+function openModal(day){
+
+  const dd=String(day).padStart(2,"0");
+  const mm=String(selectedMonth).padStart(2,"0");
+  const yyyy=selectedYear;
+
+  document.getElementById("modalDate").innerText=
+    `${dd}-${mm}-${yyyy}`;
+
+  const dayData=
+    panchangaYearData[yyyy]?.[mm]?.[dd];
+
+  if(!dayData){
+    document.getElementById("modalTithi").innerText="Please add data";
+    document.getElementById("modalNakshatra").innerText="Please add data";
+    document.getElementById("modalRahukala").innerText="Please add data";
+    document.getElementById("modalGulika").innerText="Please add data";
+    document.getElementById("modalYamaganda").innerText="Please add data";
+    document.getElementById("modalTara").innerText="Please add data";
+  } else {
+
+    document.getElementById("modalTithi").innerText=dayData.tithi;
+    document.getElementById("modalNakshatra").innerText=dayData.nakshatra;
+
+    const times=getInauspiciousTimes(dayData, yyyy, selectedMonth, day);
+
+    document.getElementById("modalRahukala").innerText=times.rahukala;
+    document.getElementById("modalGulika").innerText=times.gulika;
+    document.getElementById("modalYamaganda").innerText=times.yamaganda;
+
+    const birthStar=Number(birthSelect.value);
+    const todayStar=nakshatraMap[dayData.nakshatra];
+    document.getElementById("modalTara").innerText=
+      calculateTara(birthStar,todayStar);
+  }
+
+  document.getElementById("modal").style.display="block";
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+yearSelect.addEventListener("change",renderCalendar);
+monthSelect.addEventListener("change",renderCalendar);
+
+renderCalendar();
+
+</script>
+</body>
+</html>
